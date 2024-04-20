@@ -14,7 +14,7 @@ The project is made up of the following steps:
 9. Endpoint deployment
 10. Prediction
 
-#Data uploading and preprocessing
+#Data uploading and preprocessing#
 
 
 
