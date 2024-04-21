@@ -198,13 +198,8 @@ estimator = PyTorch(
 ### Round 1:
 
 Hyperparameters:
-{
- 'batch_size': '"128"',
- 'epochs': '2',
- 'lr': '0.002859651084098427',
- 'trainable_layers': '2'
-}
-hyperparameters={"epochs": 10, "num_classes": 10, "batch_size":128, "lr":0.0028597, "trainable_layers":2, "weight_path":None},
+
+`hyperparameters={"epochs": 10, "num_classes": 10, "batch_size":128, "lr":0.0028597, "trainable_layers":2, "weight_path":None}`
 
 Result:
 
@@ -266,7 +261,7 @@ Test set: Average loss: 1.7570, Accuracy: 4214/10000 (42%)
 ### Round 2:
 Hyperparameters:
 
-hyperparameters={"epochs": 20, "num_classes": 10, "batch_size":128, "lr":0.05, "trainable_layers":3, "weight_path":previous-model-output},
+`hyperparameters={"epochs": 20, "num_classes": 10, "batch_size":128, "lr":0.05, "trainable_layers":3, "weight_path":previous-model-output}`
 
 Result:
 
@@ -392,11 +387,86 @@ Test set: Average loss: 2.8532, Accuracy: 7038/10000 (70%)
 
 As we can see from this second plot, we have overfitting of the model to the training data. 
 This is resulting in the low accuracy of 70%.
-With more time, I would look at implimenting the following measures:
 
-Dropout layer
-Regularization
-More image pre-processing, such as flipping and rotating. 
+The plot for this round shows a classic high variance plot. We are overfitting to the training data. We need to use regularization methos such as:
+
+Dropout and weight decay.
+
+### Round 3:
+Hyperparameters:
+
+`hyperparameters={"epochs": 10, "num_classes": 10, "batch_size":128, "lr":0.01, "trainable_layers":4, "weight_path":weight_path}`
+
+Dropout of 0.2 added to the fully connected layer in the model.
+weight_decay=1e-5 added to the Adam optimizer.
+
+```
+Train Epoch: 1 [12800/50000 (26%)]#011Loss: 1.068382
+Train Epoch: 1 [25600/50000 (51%)]#011Loss: 0.891764
+Train Epoch: 1 [38400/50000 (77%)]#011Loss: 1.979000
+Test set: Average loss: 12.2965, Accuracy: 6342/10000 (63%)
+Train Epoch: 2 [0/50000 (0%)]#011Loss: 1.603551
+Train Epoch: 2 [12800/50000 (26%)]#011Loss: 0.990714
+Train Epoch: 2 [25600/50000 (51%)]#011Loss: 1.156443
+Train Epoch: 2 [38400/50000 (77%)]#011Loss: 0.733944
+Test set: Average loss: 1.1913, Accuracy: 6921/10000 (69%)
+Train Epoch: 3 [0/50000 (0%)]#011Loss: 0.960824
+Train Epoch: 3 [12800/50000 (26%)]#011Loss: 0.801614
+Train Epoch: 3 [25600/50000 (51%)]#011Loss: 0.820299
+VanishingGradient: Error
+Overfit: InProgress
+Overtraining: InProgress
+PoorWeightInitialization: InProgress
+Train Epoch: 3 [38400/50000 (77%)]#011Loss: 0.600789
+Test set: Average loss: 1.0809, Accuracy: 7420/10000 (74%)
+Train Epoch: 4 [0/50000 (0%)]#011Loss: 0.769856
+Train Epoch: 4 [12800/50000 (26%)]#011Loss: 0.837615
+Train Epoch: 4 [25600/50000 (51%)]#011Loss: 1.714671
+Train Epoch: 4 [38400/50000 (77%)]#011Loss: 0.795265
+Test set: Average loss: 1.6473, Accuracy: 7407/10000 (74%)
+Train Epoch: 5 [0/50000 (0%)]#011Loss: 2.266783
+Train Epoch: 5 [12800/50000 (26%)]#011Loss: 0.576756
+Train Epoch: 5 [25600/50000 (51%)]#011Loss: 0.603325
+Train Epoch: 5 [38400/50000 (77%)]#011Loss: 0.663793
+VanishingGradient: Error
+Overfit: Error
+Overtraining: Error
+PoorWeightInitialization: InProgress
+VanishingGradient: Error
+Overfit: Error
+Overtraining: Error
+PoorWeightInitialization: Error
+Test set: Average loss: 1.4372, Accuracy: 7628/10000 (76%)
+Train Epoch: 6 [0/50000 (0%)]#011Loss: 0.488719
+Train Epoch: 6 [12800/50000 (26%)]#011Loss: 0.515446
+Train Epoch: 6 [25600/50000 (51%)]#011Loss: 0.586988
+Train Epoch: 6 [38400/50000 (77%)]#011Loss: 0.489115
+Test set: Average loss: 1.5229, Accuracy: 7731/10000 (77%)
+Train Epoch: 7 [0/50000 (0%)]#011Loss: 0.400257
+Train Epoch: 7 [12800/50000 (26%)]#011Loss: 0.461708
+Train Epoch: 7 [25600/50000 (51%)]#011Loss: 0.497665
+Train Epoch: 7 [38400/50000 (77%)]#011Loss: 0.589339
+Test set: Average loss: 1.3409, Accuracy: 7736/10000 (77%)
+Train Epoch: 8 [0/50000 (0%)]#011Loss: 0.353389
+Train Epoch: 8 [12800/50000 (26%)]#011Loss: 0.503264
+Train Epoch: 8 [25600/50000 (51%)]#011Loss: 0.397709
+Train Epoch: 8 [38400/50000 (77%)]#011Loss: 0.588397
+Test set: Average loss: 1.8671, Accuracy: 7848/10000 (78%)
+Train Epoch: 9 [0/50000 (0%)]#011Loss: 0.366575
+Train Epoch: 9 [12800/50000 (26%)]#011Loss: 0.522114
+Train Epoch: 9 [25600/50000 (51%)]#011Loss: 0.446773
+Train Epoch: 9 [38400/50000 (77%)]#011Loss: 0.530452
+Test set: Average loss: 1.7385, Accuracy: 7829/10000 (78%)
+Train Epoch: 10 [0/50000 (0%)]#011Loss: 0.322812
+Train Epoch: 10 [12800/50000 (26%)]#011Loss: 0.266484
+Train Epoch: 10 [25600/50000 (51%)]#011Loss: 0.287044
+Train Epoch: 10 [38400/50000 (77%)]#011Loss: 0.328061
+Test set: Average loss: 1.9316, Accuracy: 7890/10000 (79%)
+```
+
+![image](https://github.com/ChrisLMills/Udacity-Image-Classification-using-AWS-SageMaker/assets/31799634/4f9053ed-d0cf-404e-8750-00c01f01fbae)
+
+
 
 ## Endpoint deployment
 
