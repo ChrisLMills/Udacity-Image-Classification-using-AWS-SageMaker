@@ -390,6 +390,11 @@ Test set: Average loss: 2.8532, Accuracy: 7038/10000 (70%)
 
 ![image](https://github.com/ChrisLMills/Udacity-Image-Classification-using-AWS-SageMaker/assets/31799634/495a3936-5281-4585-95de-45af2f6f41eb)
 
+As we can see from this second plot, we have a classic bias caused by overfitting. 
+With more time, I would look at implimenting the following measures:
+
+Dropout layer
+More image pre-processing, such as flipping and rotating. 
 
 ## Endpoint deployment
 ## Prediction
