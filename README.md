@@ -5,14 +5,13 @@ The project is made up of the following steps:
 
 1. Data uploading and preprocessing
 2. Model def
-3. Dataloader def
-4. Training def
-5. Testing def
-6. Hyperparamter Search
-7. Debugger and Profiler setup
-8. Model training
-9. Endpoint deployment
-10. Prediction
+3. Training def
+4. Testing def
+5. Hyperparamter Search
+6. Debugger and Profiler setup
+7. Model training
+8. Endpoint deployment
+9. Prediction
 
 I used PyTorch for my training script and the SageMaker SDK to setup the training environment and deploy the trained model. 
 
@@ -50,10 +49,31 @@ In addition to the FC layer, I provide a `trainable_layers` parameter to specifi
 
 I also provide a `weight_path` parameter to be able to load the weights from previous model outputs. This allows previous work to be built upon, without having to start from scratch for each round of training. 
 
-## Dataloader def
-
-
 ## Training def
+
+The training function takes the following parameters:
+
+`model` - the ResNet50 model as previously defined.
+`train_loader` - a dataloader containing 50000 training examples.
+`criterion` - the loss criterion, in this case CrossEntropyLoss.
+`optimizer` - in this case, Adam, with a learning rate passed via hyperparameters.
+`epoch` - number of epochs.
+`hook` - the SageMaker Debugger hook to be able to monitor training metrics and resource utilization. 
+
+In coming to understand how PyTorch manages back propogation, I came across this great discussion:
+
+https://discuss.pytorch.org/t/how-does-loss-function-affect-model-during-training/187244
+
+I was initially confused by the implied links from the model parameters being passed to the optimizer, the output from the model being passed to loss and then the loss and optimizer being called as separate steps:
+
+`optimizer = optim.Adam(model.parameters(), lr=args.lr)`
+
+`output = model(data)
+loss = criterion(output, target)
+loss.backward()
+optimizer.step()`
+
+
 ## Testing def
 ## Hyperparamter Search
 ## Debugger and Profiler setup
