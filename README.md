@@ -60,10 +60,6 @@ The training function takes the following parameters:
 `epoch` - number of epochs.
 `hook` - the SageMaker Debugger hook to be able to monitor training metrics and resource utilization. 
 
-In coming to understand how PyTorch manages back propogation, I came across this great discussion:
-
-https://discuss.pytorch.org/t/how-does-loss-function-affect-model-during-training/187244
-
 I was initially confused by the implied links from the model parameters being passed to the optimizer, the output from the model being passed to loss and then the loss and optimizer being called as separate steps:
 
 `optimizer = optim.Adam(model.parameters(), lr=args.lr)`
@@ -73,9 +69,33 @@ loss = criterion(output, target)
 loss.backward()
 optimizer.step()`
 
+In coming to understand how PyTorch manages back propogation, I came across this great discussion:
+
+https://discuss.pytorch.org/t/how-does-loss-function-affect-model-during-training/187244
 
 ## Testing def
+
+The test function takes the following parameters:
+
+`model` - the ResNet50 model as previously defined.
+`test_loader` - a dataloader containing 10000 test examples.
+`criterion` - the loss criterion, in this case CrossEntropyLoss.
+`hook` - the SageMaker Debugger hook to be able to monitor training metrics and resource utilization. 
+
 ## Hyperparamter Search
+
+The following search space was provided to the SageMaker `HyperparameterTuner`:
+
+```
+hyperparameter_ranges = {
+    "lr": ContinuousParameter(0.001, 0.1),
+    "batch_size": CategoricalParameter([32, 64, 128]),
+    "epochs": IntegerParameter(1,20),
+    "trainable_layers": IntegerParameter(0,3)
+}
+```
+
+
 ## Debugger and Profiler setup
 ## Model training
 ## Endpoint deployment
