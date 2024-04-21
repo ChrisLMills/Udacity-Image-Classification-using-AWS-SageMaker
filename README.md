@@ -53,12 +53,12 @@ I also provide a `weight_path` parameter to be able to load the weights from pre
 
 The training function takes the following parameters:
 
-`model` - the ResNet50 model as previously defined.
-`train_loader` - a dataloader containing 50000 training examples.
-`criterion` - the loss criterion, in this case CrossEntropyLoss.
-`optimizer` - in this case, Adam, with a learning rate passed via hyperparameters.
-`epoch` - number of epochs.
-`hook` - the SageMaker Debugger hook to be able to monitor training metrics and resource utilization. 
+`model` - the ResNet50 model as previously defined.  
+`train_loader` - a dataloader containing 50000 training examples.  
+`criterion` - the loss criterion, in this case CrossEntropyLoss.  
+`optimizer` - in this case, Adam, with a learning rate passed via hyperparameters.  
+`epoch` - number of epochs.  
+`hook` - the SageMaker Debugger hook to be able to monitor training metrics and resource utilization.  
 
 I was initially confused by the implied links from the model parameters being passed to the optimizer, the output from the model being passed to loss and then the loss and optimizer being called as separate steps:
 
@@ -79,10 +79,10 @@ https://discuss.pytorch.org/t/how-does-loss-function-affect-model-during-trainin
 
 The test function takes the following parameters:
 
-`model` - the ResNet50 model as previously defined.
-`test_loader` - a dataloader containing 10000 test examples.
-`criterion` - the loss criterion, in this case CrossEntropyLoss.
-`hook` - the SageMaker Debugger hook to be able to monitor training metrics and resource utilization. 
+`model` - the ResNet50 model as previously defined.  
+`test_loader` - a dataloader containing 10000 test examples.  
+`criterion` - the loss criterion, in this case CrossEntropyLoss.  
+`hook` - the SageMaker Debugger hook to be able to monitor training metrics and resource utilization.   
 
 ## Hyperparamter Search
 
@@ -390,11 +390,16 @@ Test set: Average loss: 2.8532, Accuracy: 7038/10000 (70%)
 
 ![image](https://github.com/ChrisLMills/Udacity-Image-Classification-using-AWS-SageMaker/assets/31799634/495a3936-5281-4585-95de-45af2f6f41eb)
 
-As we can see from this second plot, we have a classic bias caused by overfitting. 
+As we can see from this second plot, we have overfitting of the model to the training data. 
+This is resulting in the low accuracy of 70%.
 With more time, I would look at implimenting the following measures:
 
 Dropout layer
+Regularization
 More image pre-processing, such as flipping and rotating. 
 
 ## Endpoint deployment
+
+
+
 ## Prediction
