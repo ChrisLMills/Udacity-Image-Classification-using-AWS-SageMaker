@@ -64,10 +64,12 @@ I was initially confused by the implied links from the model parameters being pa
 
 `optimizer = optim.Adam(model.parameters(), lr=args.lr)`
 
-`output = model(data)
+```
+output = model(data)
 loss = criterion(output, target)
 loss.backward()
-optimizer.step()`
+optimizer.step()
+```
 
 In coming to understand how PyTorch manages back propogation, I came across this great discussion:
 
@@ -95,8 +97,299 @@ hyperparameter_ranges = {
 }
 ```
 
+Not that `trainable_layers` refers to how many layers in the pretrained model we want to finetune. 
+
+Two runs provided the following recomendations:
+
+1.
+```
+{
+ 'batch_size': '"128"',
+ 'epochs': '2',
+ 'lr': '0.0028907087694516006',
+ 'trainable_layers': '2'
+}
+```
+
+2.
+```
+{
+ 'batch_size': '"128"',
+ 'epochs': '2',
+ 'lr': '0.002859651084098427',
+ 'trainable_layers': '2'
+}
+```
+
+As it would turn out, these were not good recomendations. The learning rate is too small, the batches too large and the number of epochs too small. 
+I went on the test other values to settle on the following: 
+
+
+
 
 ## Debugger and Profiler setup
+
+To setup SageMaker Debugger, the following configs need to be profided:
+
+Rules:
+
+```
+rules = [
+        #Rule.sagemaker(rule_configs.loss_not_decreasing()),
+        ProfilerRule.sagemaker(rule_configs.LowGPUUtilization()),
+        ProfilerRule.sagemaker(rule_configs.ProfilerReport()),
+        Rule.sagemaker(rule_configs.vanishing_gradient(),),
+        Rule.sagemaker(rule_configs.overfit()),
+        Rule.sagemaker(rule_configs.overtraining()),
+        Rule.sagemaker(rule_configs.poor_weight_initialization()),
+        #Rule.sagemaker(base_config=rule_configs.loss_not_decreasing())
+]
+```
+
+DebuggerHookConfig:
+
+```
+hook_config = DebuggerHookConfig(
+    #hook_parameters={"train.save_interval": "50", "eval.save_interval": "5"},
+    collection_configs=[
+    CollectionConfig(
+        name="losses",
+        parameters={
+            "train.save_interval": "50",
+            "eval.save_interval": "50"
+        }
+    )
+]
+)
+```
+Note: you need to use save_interval, not save_step. A lot of time was wasted figuring this out. For save_step, you need to explicitly define each step. Hence, if you pass a single value to save_step, it will only save data for that one step, and you will not see anything in your plot. 
+
+ProfilerConfig:
+
+```
+profiler_config = ProfilerConfig(
+    system_monitor_interval_millis=500, framework_profile_params=FrameworkProfile(num_steps=10)
+)
+```
+
+In your script, hooks for the training and testing function need to be defined and passed to those respective functions. 
+
 ## Model training
+
+Training was done using a Sagemaker Pytorch Estimator, and done in two rounds:
+
+```
+estimator = PyTorch(
+    entry_point="train_model.py",
+    role=role,
+    framework_version="1.8.1",
+    py_version="py3",
+    instance_count=1,
+    instance_type="ml.c5.2xlarge",
+    hyperparameters={"epochs": 5, "num_classes": 10, "batch_size":64, "lr":0.01, "trainable_layers":1, "weight_path":weight_path},
+    rules=rules,
+    debugger_hook_config=hook_config,
+    profiler_config=profiler_config,
+    output_path=output_path 
+)
+```
+
+
+### Round 1:
+
+Hyperparameters:
+{
+ 'batch_size': '"128"',
+ 'epochs': '2',
+ 'lr': '0.002859651084098427',
+ 'trainable_layers': '2'
+}
+hyperparameters={"epochs": 10, "num_classes": 10, "batch_size":128, "lr":0.0028597, "trainable_layers":2, "weight_path":None},
+
+Result:
+
+```
+Train Epoch: 1 [12800/50000 (26%)]#011Loss: 20.077261
+Train Epoch: 1 [25600/50000 (51%)]#011Loss: 3.753358
+Train Epoch: 1 [38400/50000 (77%)]#011Loss: 2.934975
+Test set: Average loss: 3.0589, Accuracy: 3200/10000 (32%)
+Train Epoch: 2 [0/50000 (0%)]#011Loss: 2.769455
+Train Epoch: 2 [12800/50000 (26%)]#011Loss: 2.120270
+Train Epoch: 2 [25600/50000 (51%)]#011Loss: 2.325724
+Train Epoch: 2 [38400/50000 (77%)]#011Loss: 1.927383
+Test set: Average loss: 2.6895, Accuracy: 3614/10000 (36%)
+Train Epoch: 3 [0/50000 (0%)]#011Loss: 2.076034
+Train Epoch: 3 [12800/50000 (26%)]#011Loss: 2.152596
+Train Epoch: 3 [25600/50000 (51%)]#011Loss: 1.898087
+Train Epoch: 3 [38400/50000 (77%)]#011Loss: 1.880090
+Test set: Average loss: 2.2342, Accuracy: 3869/10000 (39%)
+Train Epoch: 4 [0/50000 (0%)]#011Loss: 2.021207
+Train Epoch: 4 [12800/50000 (26%)]#011Loss: 1.818099
+Train Epoch: 4 [25600/50000 (51%)]#011Loss: 1.808489
+Train Epoch: 4 [38400/50000 (77%)]#011Loss: 1.765604
+Test set: Average loss: 2.0180, Accuracy: 4013/10000 (40%)
+Train Epoch: 5 [0/50000 (0%)]#011Loss: 1.766563
+Train Epoch: 5 [12800/50000 (26%)]#011Loss: 1.728524
+Train Epoch: 5 [25600/50000 (51%)]#011Loss: 1.960890
+Train Epoch: 5 [38400/50000 (77%)]#011Loss: 1.610332
+Test set: Average loss: 1.8434, Accuracy: 4139/10000 (41%)
+Train Epoch: 6 [0/50000 (0%)]#011Loss: 1.662343
+Train Epoch: 6 [12800/50000 (26%)]#011Loss: 1.656353
+Train Epoch: 6 [25600/50000 (51%)]#011Loss: 1.559448
+Train Epoch: 6 [38400/50000 (77%)]#011Loss: 1.765801
+Test set: Average loss: 1.8043, Accuracy: 4155/10000 (42%)
+Train Epoch: 7 [0/50000 (0%)]#011Loss: 1.802094
+Train Epoch: 7 [12800/50000 (26%)]#011Loss: 1.778468
+Train Epoch: 7 [25600/50000 (51%)]#011Loss: 1.749434
+Train Epoch: 7 [38400/50000 (77%)]#011Loss: 1.561363
+Test set: Average loss: 1.6907, Accuracy: 4353/10000 (44%)
+Train Epoch: 8 [0/50000 (0%)]#011Loss: 1.498955
+Train Epoch: 8 [12800/50000 (26%)]#011Loss: 1.738591
+Train Epoch: 8 [25600/50000 (51%)]#011Loss: 1.726524
+Train Epoch: 8 [38400/50000 (77%)]#011Loss: 1.469194
+Test set: Average loss: 1.6661, Accuracy: 4221/10000 (42%)
+Train Epoch: 9 [0/50000 (0%)]#011Loss: 1.747864
+Train Epoch: 9 [12800/50000 (26%)]#011Loss: 1.580819
+Train Epoch: 9 [25600/50000 (51%)]#011Loss: 1.639743
+Train Epoch: 9 [38400/50000 (77%)]#011Loss: 1.632315
+Test set: Average loss: 1.8658, Accuracy: 4492/10000 (45%)
+Train Epoch: 10 [0/50000 (0%)]#011Loss: 1.582177
+Train Epoch: 10 [12800/50000 (26%)]#011Loss: 1.595542
+Train Epoch: 10 [25600/50000 (51%)]#011Loss: 1.467178
+Train Epoch: 10 [38400/50000 (77%)]#011Loss: 1.633402
+Test set: Average loss: 1.7570, Accuracy: 4214/10000 (42%)
+```
+
+![image](https://github.com/ChrisLMills/Udacity-Image-Classification-using-AWS-SageMaker/assets/31799634/1b5574fd-538a-4910-bab3-812ad8c529c8)
+
+
+### Round 2:
+Hyperparameters:
+
+hyperparameters={"epochs": 20, "num_classes": 10, "batch_size":128, "lr":0.05, "trainable_layers":3, "weight_path":previous-model-output},
+
+Result:
+
+```
+Train Epoch: 1 [12800/50000 (26%)]#011Loss: 1.377892
+Train Epoch: 1 [25600/50000 (51%)]#011Loss: 1.133370
+Train Epoch: 1 [38400/50000 (77%)]#011Loss: 1.001098
+Test set: Average loss: 1.1488, Accuracy: 6740/10000 (67%)
+Train Epoch: 2 [0/50000 (0%)]#011Loss: 0.955137
+Train Epoch: 2 [12800/50000 (26%)]#011Loss: 0.873655
+Train Epoch: 2 [25600/50000 (51%)]#011Loss: 0.849849
+Train Epoch: 2 [38400/50000 (77%)]#011Loss: 0.708235
+Test set: Average loss: 1.3739, Accuracy: 7077/10000 (71%)
+Train Epoch: 3 [0/50000 (0%)]#011Loss: 0.696587
+Train Epoch: 3 [12800/50000 (26%)]#011Loss: 0.722772
+Train Epoch: 3 [25600/50000 (51%)]#011Loss: 0.739430
+Train Epoch: 3 [38400/50000 (77%)]#011Loss: 0.783713
+Test set: Average loss: 1.2681, Accuracy: 7066/10000 (71%)
+Train Epoch: 4 [0/50000 (0%)]#011Loss: 0.742920
+Train Epoch: 4 [12800/50000 (26%)]#011Loss: 0.589553
+Train Epoch: 4 [25600/50000 (51%)]#011Loss: 0.750581
+Train Epoch: 4 [38400/50000 (77%)]#011Loss: 0.667175
+Test set: Average loss: 1.3735, Accuracy: 7223/10000 (72%)
+Train Epoch: 5 [0/50000 (0%)]#011Loss: 0.567792
+Train Epoch: 5 [12800/50000 (26%)]#011Loss: 0.504891
+Train Epoch: 5 [25600/50000 (51%)]#011Loss: 0.545125
+Train Epoch: 5 [38400/50000 (77%)]#011Loss: 0.453202
+Test set: Average loss: 2.0344, Accuracy: 7084/10000 (71%)
+Train Epoch: 6 [0/50000 (0%)]#011Loss: 0.643031
+Train Epoch: 6 [12800/50000 (26%)]#011Loss: 0.527561
+Train Epoch: 6 [25600/50000 (51%)]#011Loss: 0.503914
+VanishingGradient: IssuesFound
+Overfit: InProgress
+Overtraining: InProgress
+PoorWeightInitialization: InProgress
+Train Epoch: 6 [38400/50000 (77%)]#011Loss: 0.416939
+Test set: Average loss: 4.9940, Accuracy: 7089/10000 (71%)
+Train Epoch: 7 [0/50000 (0%)]#011Loss: 0.281261
+Train Epoch: 7 [12800/50000 (26%)]#011Loss: 0.433155
+Train Epoch: 7 [25600/50000 (51%)]#011Loss: 0.603710
+Train Epoch: 7 [38400/50000 (77%)]#011Loss: 0.485727
+Test set: Average loss: 1.3490, Accuracy: 7001/10000 (70%)
+Train Epoch: 8 [0/50000 (0%)]#011Loss: 0.472302
+Train Epoch: 8 [12800/50000 (26%)]#011Loss: 0.251676
+Train Epoch: 8 [25600/50000 (51%)]#011Loss: 0.363861
+Train Epoch: 8 [38400/50000 (77%)]#011Loss: 0.359998
+VanishingGradient: IssuesFound
+Overfit: InProgress
+Overtraining: InProgress
+PoorWeightInitialization: Error
+Test set: Average loss: 1.5120, Accuracy: 7034/10000 (70%)
+Train Epoch: 9 [0/50000 (0%)]#011Loss: 0.228926
+VanishingGradient: IssuesFound
+Overfit: InProgress
+Overtraining: Error
+PoorWeightInitialization: Error
+Train Epoch: 9 [12800/50000 (26%)]#011Loss: 0.368150
+VanishingGradient: IssuesFound
+Overfit: IssuesFound
+Overtraining: Error
+PoorWeightInitialization: Error
+Train Epoch: 9 [25600/50000 (51%)]#011Loss: 0.378665
+Train Epoch: 9 [38400/50000 (77%)]#011Loss: 0.347986
+Test set: Average loss: 1.6986, Accuracy: 7091/10000 (71%)
+Train Epoch: 10 [0/50000 (0%)]#011Loss: 0.183391
+Train Epoch: 10 [12800/50000 (26%)]#011Loss: 0.250780
+Train Epoch: 10 [25600/50000 (51%)]#011Loss: 0.193979
+Train Epoch: 10 [38400/50000 (77%)]#011Loss: 0.349006
+Test set: Average loss: 1.8006, Accuracy: 7059/10000 (71%)
+Train Epoch: 11 [0/50000 (0%)]#011Loss: 0.251324
+Train Epoch: 11 [12800/50000 (26%)]#011Loss: 0.415836
+Train Epoch: 11 [25600/50000 (51%)]#011Loss: 0.416842
+Train Epoch: 11 [38400/50000 (77%)]#011Loss: 0.492213
+Test set: Average loss: 1.8181, Accuracy: 6993/10000 (70%)
+Train Epoch: 12 [0/50000 (0%)]#011Loss: 0.128385
+Train Epoch: 12 [12800/50000 (26%)]#011Loss: 0.212389
+Train Epoch: 12 [25600/50000 (51%)]#011Loss: 0.367021
+Train Epoch: 12 [38400/50000 (77%)]#011Loss: 0.330452
+Test set: Average loss: 3.6141, Accuracy: 7020/10000 (70%)
+Train Epoch: 13 [0/50000 (0%)]#011Loss: 0.129347
+Train Epoch: 13 [12800/50000 (26%)]#011Loss: 0.274606
+Train Epoch: 13 [25600/50000 (51%)]#011Loss: 0.379741
+Train Epoch: 13 [38400/50000 (77%)]#011Loss: 0.210673
+Test set: Average loss: 4.6254, Accuracy: 7018/10000 (70%)
+Train Epoch: 14 [0/50000 (0%)]#011Loss: 0.121250
+Train Epoch: 14 [12800/50000 (26%)]#011Loss: 0.180425
+Train Epoch: 14 [25600/50000 (51%)]#011Loss: 0.154921
+Train Epoch: 14 [38400/50000 (77%)]#011Loss: 0.186153
+Test set: Average loss: 2.6880, Accuracy: 6922/10000 (69%)
+Train Epoch: 15 [0/50000 (0%)]#011Loss: 0.203109
+Train Epoch: 15 [12800/50000 (26%)]#011Loss: 0.223032
+Train Epoch: 15 [25600/50000 (51%)]#011Loss: 0.244422
+Train Epoch: 15 [38400/50000 (77%)]#011Loss: 0.391352
+Test set: Average loss: 2.6451, Accuracy: 7012/10000 (70%)
+Train Epoch: 16 [0/50000 (0%)]#011Loss: 0.212482
+Train Epoch: 16 [12800/50000 (26%)]#011Loss: 0.280434
+Train Epoch: 16 [25600/50000 (51%)]#011Loss: 0.15630120
+Train Epoch: 16 [38400/50000 (77%)]#011Loss: 0.223700
+Test set: Average loss: 3.4299, Accuracy: 6948/10000 (69%)
+Train Epoch: 17 [0/50000 (0%)]#011Loss: 0.182967
+Train Epoch: 17 [12800/50000 (26%)]#011Loss: 0.222112
+Train Epoch: 17 [25600/50000 (51%)]#011Loss: 0.166987
+Train Epoch: 17 [38400/50000 (77%)]#011Loss: 0.173975
+Test set: Average loss: 3.5416, Accuracy: 6975/10000 (70%)
+Train Epoch: 18 [0/50000 (0%)]#011Loss: 0.140496
+Train Epoch: 18 [12800/50000 (26%)]#011Loss: 0.185966
+Train Epoch: 18 [25600/50000 (51%)]#011Loss: 0.172055
+Train Epoch: 18 [38400/50000 (77%)]#011Loss: 0.108929
+Test set: Average loss: 6.8919, Accuracy: 7039/10000 (70%)
+Train Epoch: 19 [0/50000 (0%)]#011Loss: 0.133753
+Train Epoch: 19 [12800/50000 (26%)]#011Loss: 0.067656
+Train Epoch: 19 [25600/50000 (51%)]#011Loss: 0.145023
+Train Epoch: 19 [38400/50000 (77%)]#011Loss: 0.239939
+Test set: Average loss: 3.1812, Accuracy: 6878/10000 (69%)
+Train Epoch: 20 [0/50000 (0%)]#011Loss: 0.299295
+Train Epoch: 20 [12800/50000 (26%)]#011Loss: 0.126678
+Train Epoch: 20 [25600/50000 (51%)]#011Loss: 0.361809
+Train Epoch: 20 [38400/50000 (77%)]#011Loss: 0.184326
+Test set: Average loss: 2.8532, Accuracy: 7038/10000 (70%)
+```
+
+![image](https://github.com/ChrisLMills/Udacity-Image-Classification-using-AWS-SageMaker/assets/31799634/495a3936-5281-4585-95de-45af2f6f41eb)
+
+
 ## Endpoint deployment
 ## Prediction
