@@ -14,8 +14,18 @@ The project is made up of the following steps:
 9. Endpoint deployment
 10. Prediction
 
-### Data uploading and preprocessing
+## Data uploading and preprocessing
+
+For this 
+
+## Model def
 
 
-
-
+## Dataloader def
+## Training def
+## Testing def
+## Hyperparamter Search
+## Debugger and Profiler setup
+## Model training
+## Endpoint deployment
+## Prediction
