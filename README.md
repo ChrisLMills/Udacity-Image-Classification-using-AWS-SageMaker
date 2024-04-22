@@ -466,7 +466,20 @@ Test set: Average loss: 1.9316, Accuracy: 7890/10000 (79%)
 
 ![image](https://github.com/ChrisLMills/Udacity-Image-Classification-using-AWS-SageMaker/assets/31799634/4f9053ed-d0cf-404e-8750-00c01f01fbae)
 
+### Round 4
 
+This round was to rerun to the training but 
+Hyperparameters:
+
+`hyperparameters={"epochs": 1, "num_classes": 10, "batch_size":128, "lr":0.001, "trainable_layers":5, "weight_path":weight_path}`
+
+```
+Train Epoch: 1 [12800/50000 (26%)]#011Loss: 0.523572
+Train Epoch: 1 [25600/50000 (51%)]#011Loss: 0.563649
+Train Epoch: 1 [38400/50000 (77%)]#011Loss: 0.465692
+
+2024-04-22 03:46:13 Uploading - Uploading generated training modelTest set: Average loss: 1.5733, Accuracy: 8028/10000 (80%)
+```
 
 ## Endpoint deployment
 
