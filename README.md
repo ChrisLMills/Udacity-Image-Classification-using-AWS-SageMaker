@@ -485,7 +485,7 @@ Train Epoch: 1 [38400/50000 (77%)]#011Loss: 0.465692
 
 Due to going over the allocated credits of $25 during my multiple training runs, I was locked out of the AWS instance for this project. I didn't backup my .ipynb notebook, and this was lost. I was not able to deploy an endpoint for the trained model, nor run a prediction against it. However, these tasks are straightforward and covered in previous projects of mine. 
 
-I could redo the notebook. However, unlike the Rolling Stones, time is not on my side and I must push on with the rest of the course. 
+I could redo the notebook and retrain the model. However, unlike the Rolling Stones, time is not on my side and I must push on with the rest of the course. 
 
 ## Prediction
 
