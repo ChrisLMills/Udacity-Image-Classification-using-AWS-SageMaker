@@ -97,7 +97,7 @@ hyperparameter_ranges = {
 }
 ```
 
-Not that `trainable_layers` refers to how many layers in the pretrained model we want to finetune. 
+Note that `trainable_layers` refers to how many layers in the pretrained model we want to finetune. 
 
 Two runs provided the following recomendations:
 
@@ -122,7 +122,7 @@ Two runs provided the following recomendations:
 ```
 
 As it would turn out, these were not good recomendations. The learning rate is too small, the batches too large and the number of epochs too small. 
-I went on the test other values to settle on the following: 
+I went on to test other values to settle on the following: 
 
 
 
